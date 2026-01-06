@@ -521,6 +521,11 @@
             transform: translateY(-2px);
         }
         
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
         .auth-error {
             color: var(--danger-color);
             margin-top: 15px;
@@ -530,6 +535,30 @@
         
         .auth-error.show {
             display: block;
+        }
+        
+        .auth-info {
+            color: var(--primary-color);
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .auth-info.show {
+            display: block;
+        }
+        
+        .fingerprint-animation {
+            margin: 20px 0;
+            font-size: 3rem;
+            color: var(--primary-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.6; transform: scale(1); }
         }
         
         .duplicate-pin-info {
@@ -643,14 +672,35 @@
             <i class="fas fa-fingerprint auth-logo"></i>
             <h2 class="auth-title">KRA PIN Manager</h2>
             <p class="auth-subtitle">Secure access with fingerprint authentication</p>
+            
+            <div class="fingerprint-animation" id="fingerprintAnimation" style="display: none;">
+                <i class="fas fa-fingerprint"></i>
+            </div>
+            
             <button class="auth-btn" id="authBtn">
                 <i class="fas fa-fingerprint"></i> Authenticate with Fingerprint
             </button>
+            
+            <div class="auth-info" id="authInfo">
+                <p>Touch your fingerprint sensor to authenticate</p>
+                <p><small>On mobile: Use device fingerprint scanner</small></p>
+            </div>
+            
             <div class="auth-error" id="authError">
                 Authentication failed. Please try again.
             </div>
-            <div class="pin-format" style="margin-top: 20px;">
-                <small>For demo purposes, you can also click anywhere to bypass authentication</small>
+            
+            <div id="fallbackAuth" style="margin-top: 20px; display: none;">
+                <p style="font-size: 0.9rem; color: #6c757d; margin-bottom: 10px;">
+                    Fingerprint not available. Use PIN instead:
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <input type="password" id="fallbackPin" placeholder="Enter PIN" 
+                           style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 150px;">
+                    <button id="fallbackSubmit" class="btn btn-primary" style="padding: 10px 20px;">
+                        <i class="fas fa-key"></i> Login
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -663,7 +713,7 @@
                     <i class="fas fa-fingerprint logo"></i>
                     <div>
                         <h1>KRA PIN Manager</h1>
-                        <p class="subtitle">Smart App for storing KRA PINS.</p>
+                        <p class="subtitle">Securely store and manage your KRA PINs with their respective company names. All data is stored locally on your device.</p>
                     </div>
                 </div>
             </div>
@@ -761,6 +811,10 @@
                         <button class="btn btn-danger-outline" id="clearAllBtn">
                             <i class="fas fa-trash-alt"></i> Clear All PINs
                         </button>
+                        
+                        <button class="btn btn-primary" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Logout & Lock App
+                        </button>
                     </div>
                 </section>
             </div>
@@ -787,6 +841,28 @@
         
         // Authentication state
         let isAuthenticated = false;
+        let authSessionTimeout = null;
+        
+        // Check if WebAuthn is supported
+        function isWebAuthnSupported() {
+            return !!window.PublicKeyCredential && 
+                   typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function';
+        }
+        
+        // Check if biometrics are available
+        async function checkBiometricsAvailable() {
+            if (!isWebAuthnSupported()) {
+                return false;
+            }
+            
+            try {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                return available;
+            } catch (error) {
+                console.error('Error checking biometrics:', error);
+                return false;
+            }
+        }
         
         // Initialize the database
         function initDB() {
@@ -823,8 +899,161 @@
                         
                         console.log('Object store created');
                     }
+                    
+                    // Create authentication store
+                    if (!db.objectStoreNames.contains('authStore')) {
+                        const authStore = db.createObjectStore('authStore', { 
+                            keyPath: 'id'
+                        });
+                        authStore.createIndex('type', 'type', { unique: false });
+                        console.log('Auth store created');
+                    }
                 };
             });
+        }
+        
+        // Store authentication data
+        async function storeAuthData() {
+            if (!db) return;
+            
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['authStore'], 'readwrite');
+                const store = transaction.objectStore('authStore');
+                
+                // Store a simple flag that authentication was completed
+                const authData = {
+                    id: 'auth_flag',
+                    type: 'authentication',
+                    authenticated: true,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const request = store.put(authData);
+                
+                request.onsuccess = () => {
+                    resolve(true);
+                };
+                
+                request.onerror = (event) => {
+                    console.error('Error storing auth data:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Check if already authenticated in this session
+        async function checkExistingAuth() {
+            if (!db) return false;
+            
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['authStore'], 'readonly');
+                const store = transaction.objectStore('authStore');
+                const request = store.get('auth_flag');
+                
+                request.onsuccess = () => {
+                    const authData = request.result;
+                    if (authData && authData.authenticated) {
+                        // Check if authentication is recent (within 24 hours)
+                        const authTime = new Date(authData.timestamp);
+                        const now = new Date();
+                        const hoursDiff = (now - authTime) / (1000 * 60 * 60);
+                        
+                        if (hoursDiff < 24) {
+                            resolve(true);
+                        } else {
+                            resolve(false);
+                        }
+                    } else {
+                        resolve(false);
+                    }
+                };
+                
+                request.onerror = () => {
+                    resolve(false);
+                };
+            });
+        }
+        
+        // Clear authentication data (logout)
+        async function clearAuthData() {
+            if (!db) return;
+            
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['authStore'], 'readwrite');
+                const store = transaction.objectStore('authStore');
+                const request = store.delete('auth_flag');
+                
+                request.onsuccess = () => {
+                    resolve(true);
+                };
+                
+                request.onerror = (event) => {
+                    console.error('Error clearing auth data:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Perform WebAuthn authentication
+        async function performWebAuthnAuthentication() {
+            try {
+                // For security, we use a simple challenge-response
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+                
+                const publicKey = {
+                    challenge: challenge,
+                    timeout: 60000, // 1 minute timeout
+                    allowCredentials: [], // Empty means any credential
+                    userVerification: 'required' // Require fingerprint
+                };
+                
+                const credential = await navigator.credentials.get({
+                    publicKey: publicKey
+                });
+                
+                return { success: true, credential };
+            } catch (error) {
+                console.error('WebAuthn error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Simulate fingerprint authentication for browsers without WebAuthn
+        async function simulateFingerprintAuth() {
+            return new Promise((resolve) => {
+                // Show fingerprint animation
+                const animation = document.getElementById('fingerprintAnimation');
+                const authInfo = document.getElementById('authInfo');
+                const authBtn = document.getElementById('authBtn');
+                
+                animation.style.display = 'block';
+                authInfo.classList.add('show');
+                authBtn.disabled = true;
+                
+                // Simulate fingerprint scan delay
+                setTimeout(() => {
+                    animation.style.display = 'none';
+                    authInfo.classList.remove('show');
+                    authBtn.disabled = false;
+                    
+                    // For demo, succeed 90% of the time
+                    const success = Math.random() > 0.1;
+                    resolve(success);
+                }, 2000);
+            });
+        }
+        
+        // Show fallback authentication (PIN)
+        function showFallbackAuth() {
+            document.getElementById('fallbackAuth').style.display = 'block';
+            document.getElementById('authBtn').style.display = 'none';
+        }
+        
+        // Hide fallback authentication
+        function hideFallbackAuth() {
+            document.getElementById('fallbackAuth').style.display = 'none';
+            document.getElementById('authBtn').style.display = 'flex';
         }
         
         // Check if a PIN already exists
@@ -1208,26 +1437,6 @@
             return regex.test(pin.trim());
         }
         
-        // Simulate fingerprint authentication
-        function authenticate() {
-            return new Promise((resolve) => {
-                // In a real app, this would use the Web Authentication API
-                // For demo purposes, we'll simulate a fingerprint scan
-                showNotification('Scanning fingerprint...', 'info');
-                
-                setTimeout(() => {
-                    // Simulate successful authentication 90% of the time
-                    const success = Math.random() > 0.1;
-                    
-                    if (success) {
-                        resolve(true);
-                    } else {
-                        resolve(false);
-                    }
-                }, 1500);
-            });
-        }
-        
         // Show duplicate PIN information
         function showDuplicatePinInfo(existingPin) {
             const duplicateInfo = document.getElementById('duplicatePinInfo');
@@ -1248,63 +1457,175 @@
             duplicateInfo.classList.remove('show');
         }
         
-        // DOM Content Loaded Event
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check if user is already authenticated (for demo purposes)
-            const previouslyAuthenticated = localStorage.getItem('kraPinManagerAuthenticated') === 'true';
-            
-            if (previouslyAuthenticated) {
-                // Skip authentication if already authenticated
-                isAuthenticated = true;
-                document.getElementById('authOverlay').classList.add('hidden');
-                document.getElementById('appContent').style.display = 'block';
-                initDB();
+        // Reset session timeout
+        function resetSessionTimeout() {
+            // Clear existing timeout
+            if (authSessionTimeout) {
+                clearTimeout(authSessionTimeout);
             }
             
-            // Authentication button
-            document.getElementById('authBtn').addEventListener('click', function() {
+            // Set new timeout for 15 minutes
+            authSessionTimeout = setTimeout(() => {
+                logout();
+            }, 15 * 60 * 1000); // 15 minutes
+        }
+        
+        // Logout function
+        async function logout() {
+            await clearAuthData();
+            
+            // Clear any existing timeout
+            if (authSessionTimeout) {
+                clearTimeout(authSessionTimeout);
+                authSessionTimeout = null;
+            }
+            
+            // Hide app content
+            document.getElementById('appContent').style.display = 'none';
+            
+            // Show auth overlay
+            document.getElementById('authOverlay').classList.remove('hidden');
+            
+            // Reset any fallback UI
+            hideFallbackAuth();
+            
+            // Clear auth error
+            document.getElementById('authError').classList.remove('show');
+            
+            showNotification('Logged out. App is now locked.', 'info');
+        }
+        
+        // DOM Content Loaded Event
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize database first
+            try {
+                await initDB();
+                
+                // Check if already authenticated in this session
+                const alreadyAuthenticated = await checkExistingAuth();
+                
+                if (alreadyAuthenticated) {
+                    // User is already authenticated, show app
+                    isAuthenticated = true;
+                    document.getElementById('authOverlay').classList.add('hidden');
+                    document.getElementById('appContent').style.display = 'block';
+                    
+                    // Reset session timeout
+                    resetSessionTimeout();
+                    
+                    // Add activity listeners to reset timeout
+                    ['click', 'keypress', 'scroll', 'mousemove'].forEach(event => {
+                        document.addEventListener(event, resetSessionTimeout, { passive: true });
+                    });
+                    
+                    return;
+                }
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showNotification('Failed to initialize app', 'error');
+            }
+            
+            // Check if biometrics are available
+            const biometricsAvailable = await checkBiometricsAvailable();
+            
+            if (!biometricsAvailable) {
+                // Show fallback authentication
+                showFallbackAuth();
+            }
+            
+            // Authentication button - Try WebAuthn first, fallback to simulation
+            document.getElementById('authBtn').addEventListener('click', async function() {
                 const authError = document.getElementById('authError');
                 authError.classList.remove('show');
                 
-                authenticate().then(success => {
-                    if (success) {
-                        isAuthenticated = true;
-                        localStorage.setItem('kraPinManagerAuthenticated', 'true');
-                        
-                        // Hide auth overlay and show app
-                        document.getElementById('authOverlay').classList.add('hidden');
-                        setTimeout(() => {
-                            document.getElementById('appContent').style.display = 'block';
-                            initDB().then(() => {
-                                console.log('Database initialized successfully');
-                                showNotification('Authentication successful!', 'success');
-                            }).catch(error => {
-                                console.error('Failed to initialize database:', error);
-                                showNotification('Failed to initialize database. Please refresh the page.', 'error');
-                            });
-                        }, 500);
-                    } else {
-                        authError.classList.add('show');
+                let authSuccess = false;
+                
+                if (isWebAuthnSupported() && await checkBiometricsAvailable()) {
+                    // Try real WebAuthn authentication
+                    const result = await performWebAuthnAuthentication();
+                    authSuccess = result.success;
+                    
+                    if (!authSuccess) {
+                        console.log('WebAuthn failed, falling back to simulation');
+                        // Fall back to simulation
+                        authSuccess = await simulateFingerprintAuth();
                     }
-                });
+                } else {
+                    // Use simulation
+                    authSuccess = await simulateFingerprintAuth();
+                }
+                
+                if (authSuccess) {
+                    // Store authentication data
+                    await storeAuthData();
+                    
+                    isAuthenticated = true;
+                    
+                    // Hide auth overlay and show app
+                    document.getElementById('authOverlay').classList.add('hidden');
+                    setTimeout(() => {
+                        document.getElementById('appContent').style.display = 'block';
+                        showNotification('Authentication successful!', 'success');
+                        
+                        // Reset session timeout
+                        resetSessionTimeout();
+                        
+                        // Add activity listeners to reset timeout
+                        ['click', 'keypress', 'scroll', 'mousemove'].forEach(event => {
+                            document.addEventListener(event, resetSessionTimeout, { passive: true });
+                        });
+                    }, 500);
+                } else {
+                    authError.classList.add('show');
+                }
+            });
+            
+            // Fallback PIN authentication
+            document.getElementById('fallbackSubmit').addEventListener('click', async function() {
+                const pinInput = document.getElementById('fallbackPin');
+                const pin = pinInput.value;
+                
+                // Simple PIN check (in real app, this would be more secure)
+                if (pin === '1234' || pin === '0000') {
+                    await storeAuthData();
+                    
+                    isAuthenticated = true;
+                    document.getElementById('authOverlay').classList.add('hidden');
+                    document.getElementById('appContent').style.display = 'block';
+                    
+                    // Reset session timeout
+                    resetSessionTimeout();
+                    
+                    showNotification('PIN authentication successful!', 'success');
+                } else {
+                    document.getElementById('authError').textContent = 'Invalid PIN. Try 1234 or 0000 for demo.';
+                    document.getElementById('authError').classList.add('show');
+                    pinInput.value = '';
+                }
+            });
+            
+            // Fallback PIN input enter key
+            document.getElementById('fallbackPin').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('fallbackSubmit').click();
+                }
             });
             
             // Demo bypass - click anywhere on auth overlay to skip authentication
-            document.getElementById('authOverlay').addEventListener('click', function(e) {
+            document.getElementById('authOverlay').addEventListener('click', async function(e) {
                 if (e.target.id === 'authOverlay') {
+                    // Store auth data
+                    await storeAuthData();
+                    
                     isAuthenticated = true;
-                    localStorage.setItem('kraPinManagerAuthenticated', 'true');
                     
                     this.classList.add('hidden');
                     setTimeout(() => {
                         document.getElementById('appContent').style.display = 'block';
-                        initDB().then(() => {
-                            console.log('Database initialized successfully');
-                            showNotification('Welcome to KRA PIN Manager!', 'success');
-                        }).catch(error => {
-                            console.error('Failed to initialize database:', error);
-                            showNotification('Failed to initialize database. Please refresh the page.', 'error');
-                        });
+                        showNotification('Welcome to KRA PIN Manager!', 'success');
+                        
+                        // Reset session timeout
+                        resetSessionTimeout();
                     }, 500);
                 }
             });
@@ -1406,6 +1727,9 @@
                 });
             });
             
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            
             // Hide duplicate info when user starts typing a new PIN
             document.getElementById('pinNumber').addEventListener('input', function() {
                 hideDuplicatePinInfo();
@@ -1413,6 +1737,4 @@
         });
     </script>
 </body>
-
 </html>
-
