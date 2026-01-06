@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRA PIN Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary-color: #1a5f7a;
+            --secondary-color: #57cc99;
+            --accent-color: #ffd166;
+            --danger-color: #ef476f;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #2a8cb8);
+            color: white;
+            padding: 25px 20px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .logo {
+            font-size: 2.8rem;
+            color: var(--accent-color);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .app-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0f4c63;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #3bb17e;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d43f63;
+        }
+        
+        .btn-danger-outline {
+            background-color: transparent;
+            color: var(--danger-color);
+            border: 2px solid var(--danger-color);
+        }
+        
+        .btn-danger-outline:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .search-box {
+            flex-grow: 1;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #e1e5eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 95, 122, 0.2);
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .pin-count {
+            background-color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+        
+        /* MOBILE-FIRST LAYOUT - Search results ALWAYS at top */
+        .mobile-layout {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Search results section - ALWAYS at top on mobile */
+        .search-results-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            order: 1; /* Always first on mobile */
+        }
+        
+        /* Form section - comes after search results on mobile */
+        .form-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            order: 2; /* Second on mobile */
+        }
+        
+        /* Settings section - at the bottom */
+        .settings-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            order: 3; /* Third/last on mobile */
+            border-top: 4px solid #f0f0f0;
+        }
+        
+        /* Desktop layout - switches order */
+        @media (min-width: 769px) {
+            .mobile-layout {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
+                gap: 30px;
+            }
+            
+            .search-results-section {
+                order: 2; /* Right side on desktop */
+                margin-bottom: 0;
+                grid-column: 2;
+                grid-row: 1 / span 2;
+            }
+            
+            .form-section {
+                order: 1; /* Left side on desktop */
+                margin-bottom: 0;
+                grid-column: 1;
+                grid-row: 1;
+            }
+            
+            .settings-section {
+                order: 3; /* Bottom left on desktop */
+                margin-bottom: 0;
+                grid-column: 1;
+                grid-row: 2;
+            }
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 95, 122, 0.2);
+        }
+        
+        .pin-format {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .pin-format code {
+            background-color: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--primary-color);
+        }
+        
+        .btn-add {
+            width: 100%;
+            justify-content: center;
+            padding: 14px;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .search-results-header {
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            display: none;
+        }
+        
+        .search-results-header.show {
+            display: flex;
+        }
+        
+        .search-results-count {
+            background-color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .pins-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .pin-item {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .pin-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .pin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .company-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+        
+        .pin-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #6c757d;
+            transition: color 0.3s;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .action-btn:hover {
+            color: var(--primary-color);
+            background-color: rgba(26, 95, 122, 0.1);
+        }
+        
+        .pin-value {
+            font-family: monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 5px;
+            letter-spacing: 1px;
+            border: 1px solid #e1e5eb;
+        }
+        
+        .pin-notes {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f8ff;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: #555;
+        }
+        
+        .pin-date {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ced4da;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #6c757d;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+        
+        .notification.info {
+            background-color: var(--primary-color);
+        }
+        
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), #2a8cb8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .auth-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .auth-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .auth-logo {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .auth-title {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .auth-subtitle {
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        
+        .auth-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 0 auto;
+            transition: all 0.3s;
+        }
+        
+        .auth-btn:hover {
+            background-color: #0f4c63;
+            transform: translateY(-2px);
+        }
+        
+        .auth-error {
+            color: var(--danger-color);
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .auth-error.show {
+            display: block;
+        }
+        
+        .duplicate-pin-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: left;
+            display: none;
+        }
+        
+        .duplicate-pin-info.show {
+            display: block;
+        }
+        
+        .duplicate-pin-info strong {
+            color: var(--primary-color);
+        }
+        
+        .settings-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .settings-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .settings-warning i {
+            color: var(--danger-color);
+            margin-right: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            padding: 20px;
+            order: 4; /* Always last */
+        }
+        
+        /* Custom scrollbar */
+        .pins-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .pins-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .pins-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .pins-list::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .app-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                max-width: 100%;
+                order: 1;
+            }
+            
+            .pin-count {
+                order: 2;
+                align-self: center;
+            }
+            
+            .auth-container {
+                padding: 30px 20px;
+            }
+            
+            .pins-list {
+                max-height: 300px;
+            }
+            
+            .settings-actions {
+                flex-direction: column;
+            }
+            
+            .settings-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-container">
+            <i class="fas fa-fingerprint auth-logo"></i>
+            <h2 class="auth-title">KRA PIN Manager</h2>
+            <p class="auth-subtitle">Secure access with fingerprint authentication</p>
+            <button class="auth-btn" id="authBtn">
+                <i class="fas fa-fingerprint"></i> Authenticate with Fingerprint
+            </button>
+            <div class="auth-error" id="authError">
+                Authentication failed. Please try again.
+            </div>
+            <div class="pin-format" style="margin-top: 20px;">
+                <small>For demo purposes, you can also click anywhere to bypass authentication</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main App Content (Hidden until authenticated) -->
+    <div id="appContent" style="display: none;">
+        <header>
+            <div class="container">
+                <div class="logo-container">
+                    <i class="fas fa-fingerprint logo"></i>
+                    <div>
+                        <h1>KRA PIN Manager</h1>
+                        <p class="subtitle">Securely store and manage your KRA PINs with their respective company names. All data is stored locally on your device.</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="container">
+            <!-- Only Search and PIN Count at the top -->
+            <div class="app-controls">
+                <div class="pin-count">
+                    <i class="fas fa-database"></i>
+                    <span id="pinCount">0</span> PINs stored
+                </div>
+                
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by company name or PIN...">
+                </div>
+            </div>
+            
+            <!-- MOBILE-FRIENDLY LAYOUT -->
+            <div class="mobile-layout">
+                <!-- Search Results Section - ALWAYS at TOP on mobile -->
+                <section class="search-results-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-list-alt"></i> KRA PINs
+                        <span id="allPinsCount" style="font-size: 0.9rem; color: #6c757d; margin-left: auto;"></span>
+                    </h2>
+                    
+                    <div class="search-results-header" id="searchResultsHeader">
+                        <span>Search Results</span>
+                        <span class="search-results-count" id="searchResultsCount">0 items</span>
+                    </div>
+                    
+                    <div class="pins-list" id="pinsList">
+                        <!-- PIN items will be dynamically inserted here -->
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No KRA PINs stored yet</h3>
+                            <p>Add your first KRA PIN using the form below</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Form Section - Below search results on mobile -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-plus-circle"></i> Add New KRA PIN
+                    </h2>
+                    
+                    <form id="pinForm">
+                        <div class="form-group">
+                            <label for="companyName">Company/Business Name</label>
+                            <input type="text" id="companyName" class="form-control" placeholder="e.g. Upendo Village Limited" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pinNumber">KRA PIN Number</label>
+                            <input type="text" id="pinNumber" class="form-control" placeholder="e.g. P39839022N" required>
+                            <div class="pin-format">Format: <code>PxxxxxxxxN</code> (where x are numbers)</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notes">Additional Notes (Optional)</label>
+                            <textarea id="notes" class="form-control" rows="3" placeholder="Add any additional information about this PIN..."></textarea>
+                        </div>
+                        
+                        <div class="duplicate-pin-info" id="duplicatePinInfo">
+                            This PIN already exists in the database.<br>
+                            <strong>Owner:</strong> <span id="duplicateOwner">Unknown</span><br>
+                            <strong>Added on:</strong> <span id="duplicateDate">Unknown date</span>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-add">
+                            <i class="fas fa-save"></i> Save KRA PIN
+                        </button>
+                    </form>
+                </section>
+                
+                <!-- Settings Section - At the bottom, separated from main actions -->
+                <section class="settings-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-cog"></i> Data Management
+                    </h2>
+                    
+                    <div class="settings-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning:</strong> These actions affect all your stored data. Use with caution.
+                    </div>
+                    
+                    <div class="settings-actions">
+                        <button class="btn btn-secondary" id="exportBtn">
+                            <i class="fas fa-file-export"></i> Export All Data (Backup)
+                        </button>
+                        
+                        <button class="btn btn-danger-outline" id="clearAllBtn">
+                            <i class="fas fa-trash-alt"></i> Clear All PINs
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+        
+        <div class="notification" id="notification">
+            <i class="fas fa-check-circle"></i>
+            <span id="notificationText">PIN added successfully!</span>
+        </div>
+        
+        <footer class="footer">
+            <div class="container">
+                <p>KRA PIN Manager &copy; 2023 | Data stored locally using IndexedDB | Ready for APK conversion</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Database setup
+        let db;
+        const DB_NAME = 'KRAPinManagerDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'kraPins';
+        
+        // Authentication state
+        let isAuthenticated = false;
+        
+        // Initialize the database
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = (event) => {
+                    console.error('Database error:', event.target.error);
+                    reject(event.target.error);
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    console.log('Database opened successfully');
+                    updatePinCount();
+                    loadPins();
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // Create object store if it doesn't exist
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const objectStore = db.createObjectStore(STORE_NAME, { 
+                            keyPath: 'id',
+                            autoIncrement: true 
+                        });
+                        
+                        // Create indexes for searching
+                        objectStore.createIndex('company', 'company', { unique: false });
+                        objectStore.createIndex('pin', 'pin', { unique: true });
+                        objectStore.createIndex('created', 'created', { unique: false });
+                        
+                        console.log('Object store created');
+                    }
+                };
+            });
+        }
+        
+        // Check if a PIN already exists
+        function checkPinExists(pin) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const index = store.index('pin');
+                const request = index.get(pin.trim().toUpperCase());
+                
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+                
+                request.onerror = (event) => {
+                    console.error('Error checking PIN:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Add a new KRA PIN
+        function addPin(company, pin, notes = '') {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                
+                const newPin = {
+                    company: company.trim(),
+                    pin: pin.trim().toUpperCase(),
+                    notes: notes.trim(),
+                    created: new Date().toISOString(),
+                    updated: new Date().toISOString()
+                };
+                
+                const request = store.add(newPin);
+                
+                request.onsuccess = () => {
+                    console.log('PIN added:', request.result);
+                    resolve(request.result);
+                };
+                
+                request.onerror = (event) => {
+                    console.error('Error adding PIN:', event.target.error);
+                    
+                    // Check if it's a duplicate PIN error
+                    if (event.target.error.name === 'ConstraintError') {
+                        // Get the existing PIN info to show to user
+                        checkPinExists(pin).then(existingPin => {
+                            if (existingPin) {
+                                reject({
+                                    message: 'This KRA PIN already exists in the database.',
+                                    existingPin: existingPin
+                                });
+                            } else {
+                                reject('This KRA PIN already exists in the database.');
+                            }
+                        }).catch(() => {
+                            reject('This KRA PIN already exists in the database.');
+                        });
+                    } else {
+                        reject('Error saving PIN. Please try again.');
+                    }
+                };
+            });
+        }
+        
+        // Get all PINs from the database
+        function getAllPins() {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+                
+                request.onerror = (event) => {
+                    console.error('Error getting PINs:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Delete a PIN by ID
+        function deletePin(id) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                
+                request.onsuccess = () => {
+                    console.log('PIN deleted:', id);
+                    resolve(id);
+                };
+                
+                request.onerror = (event) => {
+                    console.error('Error deleting PIN:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Clear all PINs from the database
+        function clearAllPins() {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.clear();
+                
+                request.onsuccess = () => {
+                    console.log('All PINs cleared');
+                    resolve();
+                };
+                
+                request.onerror = (event) => {
+                    console.error('Error clearing PINs:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Search PINs by company name or PIN number
+        function searchPins(query) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                getAllPins().then(pins => {
+                    const lowerQuery = query.toLowerCase().trim();
+                    
+                    if (!lowerQuery) {
+                        resolve(pins);
+                        return;
+                    }
+                    
+                    const filteredPins = pins.filter(pin => {
+                        return (
+                            pin.company.toLowerCase().includes(lowerQuery) ||
+                            pin.pin.toLowerCase().includes(lowerQuery) ||
+                            (pin.notes && pin.notes.toLowerCase().includes(lowerQuery))
+                        );
+                    });
+                    
+                    resolve(filteredPins);
+                }).catch(reject);
+            });
+        }
+        
+        // Update the PIN count display
+        function updatePinCount() {
+            if (!db) return;
+            
+            getAllPins().then(pins => {
+                document.getElementById('pinCount').textContent = pins.length;
+                document.getElementById('allPinsCount').textContent = `(${pins.length} total)`;
+            }).catch(error => {
+                console.error('Error updating pin count:', error);
+            });
+        }
+        
+        // Load and display PINs
+        function loadPins(query = '') {
+            searchPins(query).then(pins => {
+                const pinsList = document.getElementById('pinsList');
+                const searchResultsHeader = document.getElementById('searchResultsHeader');
+                const searchResultsCount = document.getElementById('searchResultsCount');
+                
+                // Show/hide search results header
+                if (query.trim() !== '') {
+                    searchResultsHeader.classList.add('show');
+                    searchResultsCount.textContent = `${pins.length} item${pins.length !== 1 ? 's' : ''}`;
+                    
+                    // Scroll search results to top on mobile
+                    if (window.innerWidth <= 768) {
+                        document.querySelector('.search-results-section').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }
+                } else {
+                    searchResultsHeader.classList.remove('show');
+                }
+                
+                if (pins.length === 0) {
+                    pinsList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>${query ? 'No KRA PINs found' : 'No KRA PINs stored yet'}</h3>
+                            <p>${query ? 'Try a different search term' : 'Add your first KRA PIN using the form below'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Sort by most recently added
+                pins.sort((a, b) => new Date(b.created) - new Date(a.created));
+                
+                let pinsHTML = '';
+                
+                pins.forEach(pin => {
+                    pinsHTML += `
+                        <div class="pin-item" data-id="${pin.id}">
+                            <div class="pin-header">
+                                <div class="company-name">${escapeHtml(pin.company)}</div>
+                                <div class="pin-actions">
+                                    <button class="action-btn copy-btn" title="Copy PIN">
+                                        <i class="far fa-copy"></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" title="Delete PIN">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pin-value">${escapeHtml(pin.pin)}</div>
+                            ${pin.notes ? `<p class="pin-notes">${escapeHtml(pin.notes)}</p>` : ''}
+                            <div class="pin-date">Added: ${formatDate(pin.created)}</div>
+                        </div>
+                    `;
+                });
+                
+                pinsList.innerHTML = pinsHTML;
+                
+                // Add event listeners to action buttons
+                document.querySelectorAll('.copy-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const pinItem = this.closest('.pin-item');
+                        const pinValue = pinItem.querySelector('.pin-value').textContent;
+                        
+                        copyToClipboard(pinValue);
+                        
+                        showNotification(`PIN copied to clipboard: ${pinValue}`, 'success');
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const pinItem = this.closest('.pin-item');
+                        const pinId = parseInt(pinItem.dataset.id);
+                        const companyName = pinItem.querySelector('.company-name').textContent;
+                        
+                        if (confirm(`Are you sure you want to delete the PIN for "${companyName}"?`)) {
+                            deletePin(pinId).then(() => {
+                                pinItem.remove();
+                                updatePinCount();
+                                
+                                // Check if we have any PINs left
+                                if (document.querySelectorAll('.pin-item').length === 0) {
+                                    loadPins();
+                                }
+                                
+                                showNotification('PIN deleted successfully', 'success');
+                            }).catch(error => {
+                                console.error('Error deleting PIN:', error);
+                                showNotification('Error deleting PIN', 'error');
+                            });
+                        }
+                    });
+                });
+            }).catch(error => {
+                console.error('Error loading PINs:', error);
+                showNotification('Error loading PINs', 'error');
+            });
+        }
+        
+        // Export data as JSON file
+        function exportData() {
+            getAllPins().then(pins => {
+                if (pins.length === 0) {
+                    showNotification('No data to export', 'error');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(pins, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = `kra-pins-backup-${new Date().toISOString().slice(0,10)}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                showNotification(`Exported ${pins.length} PINs successfully`, 'success');
+            }).catch(error => {
+                console.error('Error exporting data:', error);
+                showNotification('Error exporting data', 'error');
+            });
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.className = 'notification';
+            
+            if (type === 'error') {
+                notification.classList.add('error');
+                notification.querySelector('i').className = 'fas fa-exclamation-circle';
+            } else if (type === 'info') {
+                notification.classList.add('info');
+                notification.querySelector('i').className = 'fas fa-info-circle';
+            } else {
+                notification.querySelector('i').className = 'fas fa-check-circle';
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Copy text to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('Text copied to clipboard');
+            }).catch(err => {
+                console.error('Error copying text: ', err);
+                // Fallback method
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            });
+        }
+        
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Validate KRA PIN format
+        function isValidKRApin(pin) {
+            // KRA PIN format: P followed by 8 digits followed by a letter
+            const regex = /^P\d{8}[A-Z]$/i;
+            return regex.test(pin.trim());
+        }
+        
+        // Simulate fingerprint authentication
+        function authenticate() {
+            return new Promise((resolve) => {
+                // In a real app, this would use the Web Authentication API
+                // For demo purposes, we'll simulate a fingerprint scan
+                showNotification('Scanning fingerprint...', 'info');
+                
+                setTimeout(() => {
+                    // Simulate successful authentication 90% of the time
+                    const success = Math.random() > 0.1;
+                    
+                    if (success) {
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                }, 1500);
+            });
+        }
+        
+        // Show duplicate PIN information
+        function showDuplicatePinInfo(existingPin) {
+            const duplicateInfo = document.getElementById('duplicatePinInfo');
+            const duplicateOwner = document.getElementById('duplicateOwner');
+            const duplicateDate = document.getElementById('duplicateDate');
+            
+            duplicateOwner.textContent = existingPin.company;
+            duplicateDate.textContent = formatDate(existingPin.created);
+            duplicateInfo.classList.add('show');
+            
+            // Scroll to the duplicate info
+            duplicateInfo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Hide duplicate PIN information
+        function hideDuplicatePinInfo() {
+            const duplicateInfo = document.getElementById('duplicatePinInfo');
+            duplicateInfo.classList.remove('show');
+        }
+        
+        // DOM Content Loaded Event
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if user is already authenticated (for demo purposes)
+            const previouslyAuthenticated = localStorage.getItem('kraPinManagerAuthenticated') === 'true';
+            
+            if (previouslyAuthenticated) {
+                // Skip authentication if already authenticated
+                isAuthenticated = true;
+                document.getElementById('authOverlay').classList.add('hidden');
+                document.getElementById('appContent').style.display = 'block';
+                initDB();
+            }
+            
+            // Authentication button
+            document.getElementById('authBtn').addEventListener('click', function() {
+                const authError = document.getElementById('authError');
+                authError.classList.remove('show');
+                
+                authenticate().then(success => {
+                    if (success) {
+                        isAuthenticated = true;
+                        localStorage.setItem('kraPinManagerAuthenticated', 'true');
+                        
+                        // Hide auth overlay and show app
+                        document.getElementById('authOverlay').classList.add('hidden');
+                        setTimeout(() => {
+                            document.getElementById('appContent').style.display = 'block';
+                            initDB().then(() => {
+                                console.log('Database initialized successfully');
+                                showNotification('Authentication successful!', 'success');
+                            }).catch(error => {
+                                console.error('Failed to initialize database:', error);
+                                showNotification('Failed to initialize database. Please refresh the page.', 'error');
+                            });
+                        }, 500);
+                    } else {
+                        authError.classList.add('show');
+                    }
+                });
+            });
+            
+            // Demo bypass - click anywhere on auth overlay to skip authentication
+            document.getElementById('authOverlay').addEventListener('click', function(e) {
+                if (e.target.id === 'authOverlay') {
+                    isAuthenticated = true;
+                    localStorage.setItem('kraPinManagerAuthenticated', 'true');
+                    
+                    this.classList.add('hidden');
+                    setTimeout(() => {
+                        document.getElementById('appContent').style.display = 'block';
+                        initDB().then(() => {
+                            console.log('Database initialized successfully');
+                            showNotification('Welcome to KRA PIN Manager!', 'success');
+                        }).catch(error => {
+                            console.error('Failed to initialize database:', error);
+                            showNotification('Failed to initialize database. Please refresh the page.', 'error');
+                        });
+                    }, 500);
+                }
+            });
+            
+            // Form submission
+            document.getElementById('pinForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const company = document.getElementById('companyName').value;
+                const pin = document.getElementById('pinNumber').value;
+                const notes = document.getElementById('notes').value;
+                
+                // Hide duplicate info if visible
+                hideDuplicatePinInfo();
+                
+                // Validate PIN format
+                if (!isValidKRApin(pin)) {
+                    showNotification('Invalid KRA PIN format. Should be P followed by 8 digits followed by a letter (e.g., P12345678A)', 'error');
+                    return;
+                }
+                
+                // Check if PIN already exists
+                checkPinExists(pin).then(existingPin => {
+                    if (existingPin) {
+                        // Show duplicate PIN information
+                        showDuplicatePinInfo(existingPin);
+                        showNotification(`This PIN already exists for "${existingPin.company}"`, 'error');
+                        return;
+                    }
+                    
+                    // If PIN doesn't exist, add it
+                    addPin(company, pin, notes).then(() => {
+                        // Clear form
+                        document.getElementById('pinForm').reset();
+                        
+                        // Reload PINs
+                        loadPins();
+                        updatePinCount();
+                        
+                        showNotification('KRA PIN added successfully', 'success');
+                    }).catch(error => {
+                        console.error('Error adding PIN:', error);
+                        
+                        // Check if error contains existing PIN info
+                        if (error.existingPin) {
+                            showDuplicatePinInfo(error.existingPin);
+                            showNotification(`This PIN already exists for "${error.existingPin.company}"`, 'error');
+                        } else {
+                            showNotification(error.message || error, 'error');
+                        }
+                    });
+                }).catch(error => {
+                    console.error('Error checking PIN:', error);
+                    showNotification('Error checking PIN. Please try again.', 'error');
+                });
+            });
+            
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function() {
+                loadPins(this.value);
+            });
+            
+            // Clear search when clicking the X in search field (for browsers that support it)
+            document.getElementById('searchInput').addEventListener('search', function() {
+                if (this.value === '') {
+                    loadPins();
+                }
+            });
+            
+            // Export data button
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            
+            // Clear all button - with extra confirmation
+            document.getElementById('clearAllBtn').addEventListener('click', function() {
+                getAllPins().then(pins => {
+                    if (pins.length === 0) {
+                        showNotification('No PINs to clear', 'error');
+                        return;
+                    }
+                    
+                    // First confirmation
+                    if (confirm(`WARNING: This will delete ALL ${pins.length} KRA PINs permanently. Continue?`)) {
+                        // Second confirmation with PIN count
+                        const userConfirm = prompt(`Type the number of PINs to delete (${pins.length}) to confirm:`);
+                        
+                        if (userConfirm && parseInt(userConfirm) === pins.length) {
+                            clearAllPins().then(() => {
+                                loadPins();
+                                updatePinCount();
+                                showNotification('All PINs cleared successfully', 'success');
+                            }).catch(error => {
+                                console.error('Error clearing PINs:', error);
+                                showNotification('Error clearing PINs', 'error');
+                            });
+                        } else {
+                            showNotification('Clear All cancelled', 'info');
+                        }
+                    }
+                });
+            });
+            
+            // Hide duplicate info when user starts typing a new PIN
+            document.getElementById('pinNumber').addEventListener('input', function() {
+                hideDuplicatePinInfo();
+            });
+        });
+    </script>
+</body>
+</html>
