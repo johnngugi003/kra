@@ -601,6 +601,164 @@
             background: var(--primary-color);
         }
         
+        /* New styles for water prices */
+        .water-prices-container {
+            margin-top: 15px;
+            background-color: #f8fff9;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e1e5eb;
+        }
+        
+        .water-price-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e1e5eb;
+        }
+        
+        .water-price-item:last-child {
+            border-bottom: none;
+        }
+        
+        .water-size {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .water-price {
+            font-weight: 700;
+            color: #28a745;
+        }
+        
+        .water-price .currency {
+            font-size: 0.9rem;
+            color: #218838;
+            margin-right: 3px;
+        }
+        
+        .price-input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .price-input-group .size-label {
+            min-width: 60px;
+            background-color: #f0f0f0;
+            padding: 12px 10px;
+            border: 2px solid #e1e5eb;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        
+        .price-input-group input {
+            border-radius: 0 8px 8px 0;
+            border-left: none;
+        }
+        
+        .price-input-group .currency-symbol {
+            background-color: #f0f0f0;
+            padding: 12px 15px;
+            border: 2px solid #e1e5eb;
+            border-left: none;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .edit-prices-btn {
+            margin-top: 10px;
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .edit-prices-btn:hover {
+            background-color: #ffc745;
+        }
+        
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .edit-modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .edit-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+        
+        .edit-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .edit-modal-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .close-edit-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+            transition: color 0.3s;
+        }
+        
+        .close-edit-modal:hover {
+            color: var(--danger-color);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .modal-buttons .btn {
+            flex: 1;
+            justify-content: center;
+        }
+        
         @media (max-width: 768px) {
             .app-controls {
                 flex-direction: column;
@@ -633,6 +791,19 @@
                 width: 100%;
                 justify-content: center;
             }
+            
+            .price-input-group .size-label {
+                min-width: 50px;
+                padding: 12px 8px;
+            }
+            
+            .price-input-group .currency-symbol {
+                padding: 12px 12px;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -646,8 +817,6 @@
             <button class="auth-btn" id="authBtn">
                 <i class="fas fa-fingerprint"></i> Authenticate with Fingerprint
             </button>
-           
-           
         </div>
     </div>
     
@@ -659,7 +828,7 @@
                     <i class="fas fa-fingerprint logo"></i>
                     <div>
                         <h1>KRA PIN Manager</h1>
-                        <p class="subtitle">Smart App for Storing KRA PINS.</p>
+                        <p class="subtitle">Smart App for Storing KRA PINS with Water Prices</p>
                     </div>
                 </div>
             </div>
@@ -675,7 +844,7 @@
                 
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search by company name or PIN...">
+                    <input type="text" id="searchInput" placeholder="Search by company name, PIN, or price...">
                 </div>
             </div>
             
@@ -722,6 +891,30 @@
                         </div>
                         
                         <div class="form-group">
+                            <label>Water Prices (KES) - Leave blank if not sold</label>
+                            
+                            <div class="price-input-group">
+                                <span class="size-label">0.5L</span>
+                                <input type="number" id="price_0_5" class="form-control" placeholder="Price for 0.5L" step="0.01" min="0">
+                                <span class="currency-symbol">KES</span>
+                            </div>
+                            
+                            <div class="price-input-group">
+                                <span class="size-label">1L</span>
+                                <input type="number" id="price_1" class="form-control" placeholder="Price for 1L" step="0.01" min="0">
+                                <span class="currency-symbol">KES</span>
+                            </div>
+                            
+                            <div class="price-input-group">
+                                <span class="size-label">1.5L</span>
+                                <input type="number" id="price_1_5" class="form-control" placeholder="Price for 1.5L" step="0.01" min="0">
+                                <span class="currency-symbol">KES</span>
+                            </div>
+                            
+                            <div class="pin-format">Enter prices only for the water sizes you sell to this company</div>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="notes">Additional Notes (Optional)</label>
                             <textarea id="notes" class="form-control" rows="3" placeholder="Add any additional information about this PIN..."></textarea>
                         </div>
@@ -762,6 +955,29 @@
             </div>
         </main>
         
+        <!-- Edit Water Prices Modal -->
+        <div class="edit-modal" id="editModal">
+            <div class="edit-modal-content">
+                <div class="edit-modal-header">
+                    <h3 class="edit-modal-title">Edit Water Prices</h3>
+                    <button class="close-edit-modal" id="closeEditModal">&times;</button>
+                </div>
+                
+                <div id="editModalBody">
+                    <!-- Dynamic content will be inserted here -->
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" id="saveEditBtn">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button class="btn btn-danger-outline" id="cancelEditBtn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <div class="notification" id="notification">
             <i class="fas fa-check-circle"></i>
             <span id="notificationText">PIN added successfully!</span>
@@ -778,11 +994,12 @@
         // Database setup
         let db;
         const DB_NAME = 'KRAPinManagerDB';
-        const DB_VERSION = 1;
+        const DB_VERSION = 3; // Version increased to add water prices
         const STORE_NAME = 'kraPins';
         
         // Authentication state
         let isAuthenticated = false;
+        let currentEditPinId = null;
         
         // Initialize the database
         function initDB() {
@@ -804,8 +1021,9 @@
                 
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
+                    const transaction = event.target.transaction;
                     
-                    // Create object store if it doesn't exist
+                    // Check if object store exists, if not create it
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
                         const objectStore = db.createObjectStore(STORE_NAME, { 
                             keyPath: 'id',
@@ -818,6 +1036,38 @@
                         objectStore.createIndex('created', 'created', { unique: false });
                         
                         console.log('Object store created');
+                    } else {
+                        // Object store already exists
+                        const objectStore = transaction.objectStore(STORE_NAME);
+                        
+                        // Migrate existing data if needed
+                        const getAllRequest = objectStore.getAll();
+                        
+                        getAllRequest.onsuccess = function() {
+                            const allPins = getAllRequest.result;
+                            
+                            allPins.forEach(pin => {
+                                // If old data structure (single price), convert to new structure
+                                if (pin.price && typeof pin.price === 'number') {
+                                    pin.waterPrices = {
+                                        '0.5': pin.price_0_5 || null,
+                                        '1': pin.price_1 || null,
+                                        '1.5': pin.price_1_5 || null
+                                    };
+                                    
+                                    // Set individual prices if they don't exist
+                                    if (!pin.price_0_5) pin.price_0_5 = null;
+                                    if (!pin.price_1) pin.price_1 = null;
+                                    if (!pin.price_1_5) pin.price_1_5 = null;
+                                    
+                                    // Remove old price field
+                                    delete pin.price;
+                                    
+                                    // Update the record
+                                    objectStore.put(pin);
+                                }
+                            });
+                        };
                     }
                 };
             });
@@ -848,7 +1098,7 @@
         }
         
         // Add a new KRA PIN
-        function addPin(company, pin, notes = '') {
+        function addPin(company, pin, prices, notes = '') {
             return new Promise((resolve, reject) => {
                 if (!db) {
                     reject('Database not initialized');
@@ -861,6 +1111,14 @@
                 const newPin = {
                     company: company.trim(),
                     pin: pin.trim().toUpperCase(),
+                    price_0_5: prices['0.5'] ? parseFloat(prices['0.5']) : null,
+                    price_1: prices['1'] ? parseFloat(prices['1']) : null,
+                    price_1_5: prices['1.5'] ? parseFloat(prices['1.5']) : null,
+                    waterPrices: {
+                        '0.5': prices['0.5'] ? parseFloat(prices['0.5']) : null,
+                        '1': prices['1'] ? parseFloat(prices['1']) : null,
+                        '1.5': prices['1.5'] ? parseFloat(prices['1.5']) : null
+                    },
                     notes: notes.trim(),
                     created: new Date().toISOString(),
                     updated: new Date().toISOString()
@@ -894,6 +1152,60 @@
                     } else {
                         reject('Error saving PIN. Please try again.');
                     }
+                };
+            });
+        }
+        
+        // Update an existing PIN's water prices
+        function updatePinPrices(pinId, prices) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                
+                // First get the existing PIN
+                const getRequest = store.get(pinId);
+                
+                getRequest.onsuccess = () => {
+                    const pin = getRequest.result;
+                    
+                    if (!pin) {
+                        reject('PIN not found');
+                        return;
+                    }
+                    
+                    // Update the prices
+                    pin.price_0_5 = prices['0.5'] ? parseFloat(prices['0.5']) : null;
+                    pin.price_1 = prices['1'] ? parseFloat(prices['1']) : null;
+                    pin.price_1_5 = prices['1.5'] ? parseFloat(prices['1.5']) : null;
+                    pin.waterPrices = {
+                        '0.5': prices['0.5'] ? parseFloat(prices['0.5']) : null,
+                        '1': prices['1'] ? parseFloat(prices['1']) : null,
+                        '1.5': prices['1.5'] ? parseFloat(prices['1.5']) : null
+                    };
+                    pin.updated = new Date().toISOString();
+                    
+                    // Save the updated PIN
+                    const updateRequest = store.put(pin);
+                    
+                    updateRequest.onsuccess = () => {
+                        console.log('PIN updated:', pinId);
+                        resolve(pin);
+                    };
+                    
+                    updateRequest.onerror = (event) => {
+                        console.error('Error updating PIN:', event.target.error);
+                        reject(event.target.error);
+                    };
+                };
+                
+                getRequest.onerror = (event) => {
+                    console.error('Error getting PIN:', event.target.error);
+                    reject(event.target.error);
                 };
             });
         }
@@ -969,7 +1281,7 @@
             });
         }
         
-        // Search PINs by company name or PIN number
+        // Search PINs by company name, PIN number, or price
         function searchPins(query) {
             return new Promise((resolve, reject) => {
                 if (!db) {
@@ -986,11 +1298,21 @@
                     }
                     
                     const filteredPins = pins.filter(pin => {
-                        return (
-                            pin.company.toLowerCase().includes(lowerQuery) ||
-                            pin.pin.toLowerCase().includes(lowerQuery) ||
-                            (pin.notes && pin.notes.toLowerCase().includes(lowerQuery))
-                        );
+                        // Search in company name
+                        if (pin.company.toLowerCase().includes(lowerQuery)) return true;
+                        
+                        // Search in PIN number
+                        if (pin.pin.toLowerCase().includes(lowerQuery)) return true;
+                        
+                        // Search in notes
+                        if (pin.notes && pin.notes.toLowerCase().includes(lowerQuery)) return true;
+                        
+                        // Search in water prices
+                        if (pin.price_0_5 && pin.price_0_5.toString().includes(lowerQuery)) return true;
+                        if (pin.price_1 && pin.price_1.toString().includes(lowerQuery)) return true;
+                        if (pin.price_1_5 && pin.price_1_5.toString().includes(lowerQuery)) return true;
+                        
+                        return false;
                     });
                     
                     resolve(filteredPins);
@@ -1007,6 +1329,15 @@
                 document.getElementById('allPinsCount').textContent = `(${pins.length} total)`;
             }).catch(error => {
                 console.error('Error updating pin count:', error);
+            });
+        }
+        
+        // Format price with commas
+        function formatPrice(price) {
+            if (!price) return 'N/A';
+            return parseFloat(price).toLocaleString('en-KE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             });
         }
         
@@ -1050,6 +1381,9 @@
                 let pinsHTML = '';
                 
                 pins.forEach(pin => {
+                    // Check if any water prices exist
+                    const hasPrices = pin.price_0_5 || pin.price_1 || pin.price_1_5;
+                    
                     pinsHTML += `
                         <div class="pin-item" data-id="${pin.id}">
                             <div class="pin-header">
@@ -1058,12 +1392,47 @@
                                     <button class="action-btn copy-btn" title="Copy PIN">
                                         <i class="far fa-copy"></i>
                                     </button>
+                                    <button class="action-btn edit-prices-action-btn" title="Edit Water Prices">
+                                        <i class="far fa-edit"></i>
+                                    </button>
                                     <button class="action-btn delete-btn" title="Delete PIN">
                                         <i class="far fa-trash-alt"></i>
                                     </button>
                                 </div>
                             </div>
                             <div class="pin-value">${escapeHtml(pin.pin)}</div>
+                            
+                            ${hasPrices ? `
+                                <div class="water-prices-container">
+                                    ${pin.price_0_5 ? `
+                                        <div class="water-price-item">
+                                            <span class="water-size">0.5L</span>
+                                            <span class="water-price">
+                                                <span class="currency">KES</span> ${formatPrice(pin.price_0_5)}
+                                            </span>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${pin.price_1 ? `
+                                        <div class="water-price-item">
+                                            <span class="water-size">1L</span>
+                                            <span class="water-price">
+                                                <span class="currency">KES</span> ${formatPrice(pin.price_1)}
+                                            </span>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${pin.price_1_5 ? `
+                                        <div class="water-price-item">
+                                            <span class="water-size">1.5L</span>
+                                            <span class="water-price">
+                                                <span class="currency">KES</span> ${formatPrice(pin.price_1_5)}
+                                            </span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : '<p style="margin-top: 10px; color: #6c757d; font-style: italic;">No water prices set</p>'}
+                            
                             ${pin.notes ? `<p class="pin-notes">${escapeHtml(pin.notes)}</p>` : ''}
                             <div class="pin-date">Added: ${formatDate(pin.created)}</div>
                         </div>
@@ -1081,6 +1450,14 @@
                         copyToClipboard(pinValue);
                         
                         showNotification(`PIN copied to clipboard: ${pinValue}`, 'success');
+                    });
+                });
+                
+                document.querySelectorAll('.edit-prices-action-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const pinItem = this.closest('.pin-item');
+                        const pinId = parseInt(pinItem.dataset.id);
+                        openEditModal(pinId);
                     });
                 });
                 
@@ -1111,6 +1488,97 @@
             }).catch(error => {
                 console.error('Error loading PINs:', error);
                 showNotification('Error loading PINs', 'error');
+            });
+        }
+        
+        // Open edit modal for water prices
+        function openEditModal(pinId) {
+            if (!db) return;
+            
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(pinId);
+            
+            request.onsuccess = () => {
+                const pin = request.result;
+                
+                if (!pin) {
+                    showNotification('PIN not found', 'error');
+                    return;
+                }
+                
+                currentEditPinId = pinId;
+                
+                // Populate modal with current prices
+                document.getElementById('editModalBody').innerHTML = `
+                    <div class="form-group">
+                        <label><strong>${escapeHtml(pin.company)}</strong> - ${escapeHtml(pin.pin)}</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Edit Water Prices (KES) - Leave blank if not sold</label>
+                        
+                        <div class="price-input-group">
+                            <span class="size-label">0.5L</span>
+                            <input type="number" id="edit_price_0_5" class="form-control" placeholder="Price for 0.5L" step="0.01" min="0" value="${pin.price_0_5 || ''}">
+                            <span class="currency-symbol">KES</span>
+                        </div>
+                        
+                        <div class="price-input-group">
+                            <span class="size-label">1L</span>
+                            <input type="number" id="edit_price_1" class="form-control" placeholder="Price for 1L" step="0.01" min="0" value="${pin.price_1 || ''}">
+                            <span class="currency-symbol">KES</span>
+                        </div>
+                        
+                        <div class="price-input-group">
+                            <span class="size-label">1.5L</span>
+                            <input type="number" id="edit_price_1_5" class="form-control" placeholder="Price for 1.5L" step="0.01" min="0" value="${pin.price_1_5 || ''}">
+                            <span class="currency-symbol">KES</span>
+                        </div>
+                        
+                        <div class="pin-format">Enter prices only for the water sizes you sell to this company</div>
+                    </div>
+                `;
+                
+                // Show modal
+                document.getElementById('editModal').classList.add('show');
+            };
+            
+            request.onerror = (error) => {
+                console.error('Error getting PIN for edit:', error);
+                showNotification('Error loading PIN data', 'error');
+            };
+        }
+        
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            currentEditPinId = null;
+        }
+        
+        // Save edited prices
+        function saveEditedPrices() {
+            if (!currentEditPinId) return;
+            
+            const prices = {
+                '0.5': document.getElementById('edit_price_0_5').value,
+                '1': document.getElementById('edit_price_1').value,
+                '1.5': document.getElementById('edit_price_1_5').value
+            };
+            
+            // Validate that at least one price is entered
+            if (!prices['0.5'] && !prices['1'] && !prices['1.5']) {
+                showNotification('Please enter at least one water price', 'error');
+                return;
+            }
+            
+            updatePinPrices(currentEditPinId, prices).then(() => {
+                closeEditModal();
+                loadPins(document.getElementById('searchInput').value);
+                showNotification('Water prices updated successfully', 'success');
+            }).catch(error => {
+                console.error('Error updating prices:', error);
+                showNotification('Error updating water prices', 'error');
             });
         }
         
@@ -1311,6 +1779,9 @@
                 
                 const company = document.getElementById('companyName').value;
                 const pin = document.getElementById('pinNumber').value;
+                const price_0_5 = document.getElementById('price_0_5').value;
+                const price_1 = document.getElementById('price_1').value;
+                const price_1_5 = document.getElementById('price_1_5').value;
                 const notes = document.getElementById('notes').value;
                 
                 // Hide duplicate info if visible
@@ -1322,6 +1793,18 @@
                     return;
                 }
                 
+                // Validate that at least one price is entered
+                if (!price_0_5 && !price_1 && !price_1_5) {
+                    showNotification('Please enter at least one water price', 'error');
+                    return;
+                }
+                
+                const prices = {
+                    '0.5': price_0_5,
+                    '1': price_1,
+                    '1.5': price_1_5
+                };
+                
                 // Check if PIN already exists
                 checkPinExists(pin).then(existingPin => {
                     if (existingPin) {
@@ -1332,7 +1815,7 @@
                     }
                     
                     // If PIN doesn't exist, add it
-                    addPin(company, pin, notes).then(() => {
+                    addPin(company, pin, prices, notes).then(() => {
                         // Clear form
                         document.getElementById('pinForm').reset();
                         
@@ -1405,6 +1888,25 @@
             // Hide duplicate info when user starts typing a new PIN
             document.getElementById('pinNumber').addEventListener('input', function() {
                 hideDuplicatePinInfo();
+            });
+            
+            // Edit modal event listeners
+            document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
+            document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
+            document.getElementById('saveEditBtn').addEventListener('click', saveEditedPrices);
+            
+            // Close modal when clicking outside
+            document.getElementById('editModal').addEventListener('click', function(e) {
+                if (e.target.id === 'editModal') {
+                    closeEditModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('show')) {
+                    closeEditModal();
+                }
             });
         });
     </script>
