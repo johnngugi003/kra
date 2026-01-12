@@ -1784,11 +1784,6 @@
                 // Hide duplicate info if visible
                 hideDuplicatePinInfo();
                 
-                // Validate PIN format
-                if (!isValidKRApin(pin)) {
-                    showNotification('Invalid KRA PIN format. Should be P followed by 8 digits followed by a letter (e.g., P12345678A)', 'error');
-                    return;
-                }
                 
                
                 
@@ -1905,6 +1900,7 @@
     </script>
 </body>
 </html>
+
 
 
 
