@@ -1790,11 +1790,7 @@
                     return;
                 }
                 
-                // Validate that at least one price is entered
-                if (!price_0_5 && !price_1 && !price_1_5) {
-                    showNotification('Please enter at least one water price', 'error');
-                    return;
-                }
+               
                 
                 const prices = {
                     '0.5': price_0_5,
@@ -1909,6 +1905,7 @@
     </script>
 </body>
 </html>
+
 
 
 
