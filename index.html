@@ -1668,7 +1668,7 @@
         // Validate KRA PIN format
         function isValidKRApin(pin) {
             // KRA PIN format: P followed by 8 digits followed by a letter
-            const regex = /^P\d{8}[A-Z]$/i;
+            const regex = /^P\d{9}[A-Z]$/i;
             return regex.test(pin.trim());
         }
         
@@ -1912,4 +1912,5 @@
     </script>
 </body>
 </html>
+
 
